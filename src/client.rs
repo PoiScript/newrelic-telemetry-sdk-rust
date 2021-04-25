@@ -9,7 +9,7 @@ use flate2::Compression;
 use hyper::client::HttpConnector;
 use hyper::header::{CONTENT_ENCODING, CONTENT_TYPE, USER_AGENT};
 use hyper::{Body, HeaderMap, Method, Request, Response, Uri};
-use hyper_tls::HttpsConnector;
+use hyper_rustls::HttpsConnector;
 use log::{debug, error, info};
 use std::future::Future;
 use std::io::Write;
@@ -350,7 +350,7 @@ pub struct Client {
 impl Client {
     /// Constructs a `Client` from a `ClientBuilder`.
     pub fn new(builder: ClientBuilder) -> Result<Self> {
-        let https = HttpsConnector::new();
+        let https = HttpsConnector::with_webpki_roots();
         let user_agent = builder.get_user_agent_header();
         let backoff_seq = builder.get_backoff_sequence();
 
@@ -519,7 +519,7 @@ pub mod blocking {
     impl Client {
         pub fn new(builder: ClientBuilder) -> Result<Self> {
             let (tx, rx) = mpsc::channel::<Box<SendableType>>();
-            let mut runtime = Builder::new().threaded_scheduler().enable_all().build()?;
+            let runtime = Builder::new_multi_thread().enable_all().build()?;
             let queue_max = builder.blocking_queue_max;
             let client = builder.build()?;
 
